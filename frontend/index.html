@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Container Lab</title>
+</head>
+<body>
+    <h1>Frontend (Nginx)</h1>
+    <div id="msg" >Loading...</div>
+    <script>
+        
+        fetch('/api')
+            .then(r => r.json())
+            .then(d => {document.getElementById('msg').textContent = d.message;})
+            .catch(e => {document.getElementById('msg').textContent = 'API error: ' + e; });
+            
+    </script>
+    
+</body>
+</html>
+
+create fro
