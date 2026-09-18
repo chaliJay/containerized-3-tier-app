@@ -1,0 +1,8 @@
+apiversion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  DB_HOST: "db"
+  DB_USER: "appuser"
+  DB_NAME: "appdb"
