@@ -5,19 +5,289 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Container Lab</title>
 </head>
+<style>
+    .highlight-section {
+        background: linear-gradient(135deg, #fff8e1, #ffecb3);
+        padding: 20px;
+        background-color: #f4f4f4;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        max-width: 100rem;
+    }
+</style>
 <body>
-    <h1>Frontend (Nginx)</h1>
-    <div id="msg" >Loading...</div>
-    <script>
-        
-        fetch('/api')
-            .then(r => r.json())
-            .then(d => {document.getElementById('msg').textContent = d.message;})
-            .catch(e => {document.getElementById('msg').textContent = 'API error: ' + e; });
-            
+    <h1>Weeek 4 Assignment</h1>
+    <div>
+        <h2>3-tier Application Test</h2>
+
+        <div class="highlight-section">
+            <p>
+                <strong>Message:</strong>
+                <span id="msg">Loading...</span>
+            </p>
+            <p>
+                <strong>MySQL Database Time:</strong>
+                <span id="time">Loading time...</span>
+            </p>
+            <p>
+                <strong>Total Number of visits:</strong>
+                <span id="visits">Loading visits...</span>
+            </p>
+        </div>
+
+        <h2>Documentatino of Work</h2>
+        <h2>1. Local Development Phase</h2>
+        <h3>Step1 : Creating the Project Structure</h3>
+        <p>
+           I began the assignment by creating the folder structure for the three-tier application. 
+           This created three main components: 
+           <ul>
+            <li><strong>frontend/ - Nginx static site</strong> </li>
+            <li><strong>backend/ - Flask + Gunicorn API</strong></li>
+            <li><strong>db/init/ - MySQL initialization scripts</strong></li>
+           </ul>  
+           <img src="https://a3s.fi/swift/v1/Assignment4/project structure.png" alt="project-structure"></img>      
+        </p>
+
+        <h3>Step2 : Backend Setup</h3>
+        <p>
+           I created the backend application that exposes two endpoints: 
+           <ul>
+            <li><strong>/api/health - health check</strong> </li>
+            <li><strong>/api - returns a message from MySQL</strong></li>
+           </ul>       
+        </p>
+
+        <h3>Step3 : Frontend Setup</h3>
+        <p>
+           I created a simple HTML page that fetches /api and displays the message. Then I configured Nginx to:
+           <ul>
+            <li><strong>Serve the static frontend</strong> </li>
+            <li><strong>Proxy /api requests to the backend container at backend:8000</strong></li>
+           </ul>       
+        </p>
+
+        <h3>Step4 : Database Setup</h3>
+        <p>
+           I prepared MySQL initialization using an SQL script that:
+           <ul>
+            <li><strong>Creates database appdb</strong> </li>
+            <li><strong>Creates user appuser</strong></li>
+            <li><strong>Grants privileges</strong></li>
+           </ul>       
+        </p>
+
+        <h3>Step5 : Creating .env for Docker Compose and Create Docker Compose file</h3>
+        <p>
+           I created an .env file containing: MySQL root password, DB host, DB user, DB password, DB name. This file is used by Docker Compose to configure all services.
+           Then I created a Docker Compose file that defines: db, frontend and backend services.     
+        </p>
+
+        <h3>Step6 : Running locally</h3>
+        <p>
+           I started the full three-tier stack using: <strong>docker compose -f docker-compose.dev.yml --env-file .env up --build -d</strong>
+           Opening http://localhost:8080 looks like this.  At this point:
+            <ul>
+                <li><strong>All three containers worked together</strong> </li>
+                <li><strong>Frontend → Backend → Database communication was successful</strong></li>
+                <li><strong>The message from MySQL appeared on the frontend</strong></li>
+                <li><strong>The stack was fully functional locally</strong></li>
+           </ul> 
+           <img src="https://a3s.fi/swift/v1/Assignment4/local_deployment_using_docker.png" alt="Local Deploymente"></img>       
+        </p>
+
+        <br></br>
+        <hr></hr>
+
+        <h2>2. Deploying the Three-Tier Application to Rahti Phase</h2>
+        <p>
+           I logged into the Rahti web console using my university credentials. Then I created a new project for the assignment.
+           After completing local development and testing with Docker Compose, I created the needed yaml files to deploy application to Rahti.
+           This phase involved creating:
+            <ul>
+                <li><strong>3 Deployments - frontend, backend, database</strong> </li>
+                <li><strong>3 Services - frontend, backend, database</strong></li>
+                <li><strong>ConfigMap</strong></li>
+                <li><strong>Route</strong></li>
+                <li><strong>Secret</strong></li>
+                <li><strong>PersistentVolumeClaim (PVC) for MySQL</strong></li>
+           </ul> 
+           All resources were applied through the Rahti web console using the “Import YAML” feature.     
+        </p>
+
+        <h3>Short Description of My Application</h3>
+        <p>
+          My application is a three-tier web system consisting of a frontend (Nginx), a backend API (Flask + Gunicorn), and a MySQL database. 
+          When the user opens the frontend page, the browser sends a request to the backend's /api endpoint. 
+          The backend connects to the MySQL database, reads a greeting message, inserts a new visitor record, retrieves the total visitor count, and fetches the current database time. 
+          It then returns all this information as JSON. 
+          The frontend displays the message, the database time, and the visitor count, demonstrating full communication between all three tiers and confirming that the database persists data across requests and pod restarts.
+        </p>
+
+        <h3>Evidence That Frontend → Backend → Database Communication Works</h3>
+        <img src="https://a3s.fi/swift/v1/Assignment4/deployment.png" alt="Rahti Deploymentr"></img>
+        <p>
+          I opened the frontend route: https://frontend-route-three-tier-app.2.rahtiapp.fi/
+          The frontend displays as above. This proves: Frontend → Backend communication works, Backend → Database communication works, The Nginx proxy configuration is correct, The API call from JavaScript succeeded  
+           <strong>Hello from MYSQL via Flask!</strong> This message does NOT come from the frontend.It is generated by the backend using this SQL query. 
+           This proves The frontend JavaScript fetch() request reached the backend. 
+           The backend Flask API responded correctly.The Nginx proxy forwarded /api to the backend service.
+           The backend only returns this message after connecting to MySQL and executing the SQL query.
+           The next line server time also displayed from server.
+           This is example of <strong>READ operation</strong>
+           The final evidence is the frontend displays visit counter from database.
+           This is the visit count stored in MySQL.
+           Everytime frontend loads it inserts a new row into the counter table. Then returns the count to the frontend.
+           This is example of <strong>WRITE operation</strong>
+        </p>
+
+        <h3>Evidence That Database Persistence Works</h3>
+        <p>
+          When visit public url, counter increases over time. This proves: Data is stored in MySQL. Data is not lost between requests
+          After restarting the backend pod:The visit count remained the same. The next visit increased the number to next number.
+          This proves: Backend is stateless Database is persistent
+          Restarting database pod does NOT reset the counter
+          I restarted the MySQL pod in Rahti.
+          After restart: The counter table still contained all previous rows The visit count continued increasing normally
+          This proves: The PersistentVolumeClaim (PVC) is working MySQL data survives pod restarts Database persistence is correctly configured
+        </p>
+
+        <h3>ConfigMaps and Secrets for Container Configuration</h3>
+        <p>
+          In Kubernetes, both ConfigMaps and Secrets are used to provide configuration data to containers, but they serve different purposes. 
+          A ConfigMap stores non-sensitive configuration values such as database hostnames, usernames, and application settings. 
+          These values are injected into containers as environment variables or mounted as configuration files, allowing the application to read them at runtime without hard-coding them into the image. 
+          In contrast, a Secret is designed specifically for sensitive information like passwords, API keys, and tokens. Secrets are stored in a protected, base64-encoded format and are only accessible to authorized pods. 
+          In my application, the backend deployment uses a ConfigMap to receive safe configuration values such as DB_HOST, DB_NAME, and DB_USER, while a Secret provides the sensitive DB_PASSWORD and MYSQL_ROOT_PASSWORD. 
+          This separation ensures that containers receive all necessary configuration while keeping confidential data secure and following Kubernetes best practices.
+        </p>
+
+        <h3>Database Persistence in Rahti</h3>
+        <p>
+          In this application, the MySQL database must use persistent storage so that data is not lost when containers restart. 
+          In Rahti, I created a PersistentVolumeClaim (PVC) and attached it to the MySQL deployment, ensuring that all database files under /var/lib/mysql are stored on Rahti's persistent storage backend rather than inside the pod's ephemeral filesystem. 
+          To verify persistence experimentally, I inserted several rows into the counter table through the backend API and confirmed the visitor count increased. 
+          Then I manually deleted the MySQL pod from the Rahti console. When Rahti automatically recreated the pod, I connected to the database again and checked the counter table; all previously stored rows were still present. 
+          This demonstrated that the data survived pod replacement and that the PVC was functioning correctly. 
+          Persistence in Rahti differs from the Docker volume used in earlier exercises because Docker volumes store data locally on the developer's machine, while Rahti PVCs store data on a network-backed persistent storage system managed by the cluster. 
+          This means data in Rahti remains intact even if pods are rescheduled to different nodes, whereas Docker volumes only persist as long as the local Docker environment remains unchanged.        
+        </p>
+
+        <h3>Comparison of Rahti and cPouta</h3>
+        <p>
+          Rahti and cPouta are both cloud services provided by CSC, but they serve different purposes and operate at different abstraction levels. 
+          cPouta is an Infrastructure-as-a-Service (IaaS) platform where the user manages virtual machines directly. 
+          In cPouta, you are responsible for installing and configuring everything yourself, including the operating system, web server, security updates, networking rules, and storage. 
+          This gives full control but also requires more manual work. In contrast, Rahti is a Platform-as-a-Service (PaaS) environment built on Kubernetes/OpenShift. 
+          Instead of managing virtual machines, you deploy container images, and Rahti automatically handles scheduling, scaling, networking, routing, health checks, and persistent storage. 
+          Rahti uses Deployments, Services, Routes, Secrets, and ConfigMaps to manage applications declaratively, while cPouta requires manual configuration through SSH and system administration. 
+          In summary, cPouta gives raw infrastructure control, while Rahti provides a higher-level, automated platform for running containerized applications with less operational overhead.
+        </p>
+
+        <h3>Container Orchestration Experiments</h3>
+        <h4>1. Pod Recovery Experiment</h4>
+        <p>
+            This experiment is to verify that Rahti automatically recreates pods when one is deleted, demonstrating container orchestration and self-healing behavior.
+            Open Rahti → Workloads → Pods and locate the backend pod.
+            This is a screenshot before deletion, showing the running backend pod.
+        </p>
+        <img src="https://a3s.fi/swift/v1/Assignment4/before_delete_pods.png" alt="before delete pods"></img>
+
+        <p>
+            Then I deleted the backend pod manually. Observe Rahti automatically creating a new pod with a different name.
+            This is the screenshots during recreation, showing the new pod being created.
+        </p>
+        <img src="https://a3s.fi/swift/v1/Assignment4/creating_pods.png" alt="creating pods"></img>
+
+        <p>
+            Wait until the new pod status changes to Running.Take a screenshot after recovery, showing the new pod fully running.
+        </p>
+        <img src="https://a3s.fi/swift/v1/Assignment4/after_delete_pods.png" alt="after delete pods"></img>
+
+        <p>
+            Rahti uses a Deployment controller that defines the desired number of replicas.
+            When a pod is deleted, Kubernetes detects that the actual number of pods is less than desired and automatically creates a replacement.
+            This behavior proves self-healing — Rahti maintains the desired state of the application without manual intervention.
+        </p>
+
+        <h4>2. Scaling Experiment</h4>
+        <p>
+            I opened Rahti → Workloads → Deployments and selected my backend deployment.
+            In the deployment settings, I changed the number of replicas from 1 to 3.
+            I refreshed the frontend several times to confirm the application still worked.
+        </p>
+        <img src="https://a3s.fi/swift/v1/Assignment4/before_experiment.png" alt="before experiment"></img>
+        <img src="https://a3s.fi/swift/v1/Assignment4/1pod.png" alt="1 pod"></img>
+
+        <p>
+            Rahti created new pods automatically as soon as I increased the replica count.
+            The new pods had different names but identical configuration.
+            The frontend continued working normally — no downtime.
+        </p>
+        <img src="https://a3s.fi/swift/v1/Assignment4/scale_to_3.png" alt="after scale to 3 pods"></img>
+
+        <p>
+            In Rahti, the frontend does not need to know the IP addresses of individual backend pods because Kubernetes provides a stable communication layer through a Service. 
+            Each backend pod receives its own internal IP address, but these IPs change whenever pods are restarted, scaled, or replaced. 
+            Instead of connecting directly to pod IPs, the frontend sends its requests to the backend Service, which has a permanent virtual IP and DNS name.
+            The Service automatically discovers all backend pods using label selectors and forwards incoming requests to whichever pods are currently running. 
+            This means the frontend always communicates with a single, stable endpoint, while Kubernetes handles load balancing and routing behind the scenes. 
+            As a result, the application continues working even when pods are deleted, recreated, or scaled, demonstrating how container orchestration abstracts away pod-level networking details.
+        </p>
+
+        <h4>3. Application Update Experiment</h4>
+
+        <p>
+            I made a small change to my backend application.
+            I rebuilt the Docker image locally and pushed the new version to Docker Hub with a new tag.
+            In Rahti, I opened Workloads → Deployments → backend.
+            I edited the deployment and changed the container image from the old tag to the new one.
+            After saving, Rahti automatically started a rolling update:
+            New pods began appearing with the updated image.
+            Old pods started terminating one by one.
+            I waited until all new pods reached Running state.
+            I refreshed the frontend route to confirm the updated backend behavior.
+        </p>
+        <img src="https://a3s.fi/swift/v1/Assignment4/old_image.png" alt="old image"></img>
+        <img src="https://a3s.fi/swift/v1/Assignment4/old_deployment.png" alt="old deployment"></img>
+        <p>
+            Rahti immediately pulled the new image tag and created new backend pods.
+            The old pods did not disappear instantly — Rahti replaced them gradually.
+            During the update, the application stayed online with no downtime.
+            Once the rollout finished, only the new pods were running.
+            The frontend showed the updated backend output.
+            This confirmed that Rahti handles updates automatically and safely without breaking the application.
+        </p>
+        <img src="https://a3s.fi/swift/v1/Assignment4/new_image.png" alt="new image"></img>
+        <img src="https://a3s.fi/swift/v1/Assignment4/updated_deployment.png" alt="updated deployment"></img>
+
+        <h3>Most Important Problem Encountered and How I Solved It</h3>
+        <p>
+          The most significant problem I encountered during the project was that the backend could not connect to the MySQL database after deploying the application to Rahti. 
+          The frontend loaded correctly, but the backend API returned errors, and the visitor counter did not update. 
+          After investigating the backend logs, I discovered that the database hostname and credentials were not being passed correctly to the backend container. 
+          In Rahti, environment variables must be provided through ConfigMaps and Secrets, and the backend deployment must explicitly reference them.
+          I solved the issue by creating a Secret for the database password and a ConfigMap for the non-sensitive settings, then updating the backend Deployment YAML to include these values under the env: section.
+          Once the deployment was redeployed with the correct environment variables, the backend successfully connected to MySQL, the /api endpoint returned the expected JSON, and the visitor counter began increasing normally. 
+          This confirmed that the configuration was correct and that all three tiers were communicating properly.       
+        </p>
+
+    </div>
+
+    <script>  
+        fetch("/api")
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.error) {
+                        document.getElementById("msg").innerText = "Error from backend api: " + data.error;
+                    } else {
+                        document.getElementById("msg").innerText = data.message;
+                        document.getElementById("time").innerText = data.db_time;
+                        document.getElementById("visits").innerText = "No of visits: " + data.visitor_count;
+                    }
+                })
+                .catch((error) => console.error("Error fetching data:", error));
     </script>
     
 </body>
 </html>
-
-create fro

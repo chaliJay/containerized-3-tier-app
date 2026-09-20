@@ -1,0 +1,3 @@
+# Secrets and credential
+.env
+*.secret
