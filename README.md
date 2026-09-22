@@ -15,45 +15,85 @@ Rahti YAML files for deployments and services
 
 ## System Architecture Diagram
 
-                 ┌──────────────────────────────┐
-                 │          Frontend             │
-                 │      (React / Vite App)       │
-                 └──────────────┬───────────────┘
-                                │
-                                │ HTTP Requests
-                                ▼
-                 ┌──────────────────────────────┐
-                 │      Backend Service          │
-                 │   (Stable ClusterIP / DNS)    │
-                 └──────────────┬───────────────┘
-                                │
-                                │ Load Balancing
-                                ▼
-        ┌──────────────────────────────────────────────────┐
-        │                 Backend Pods (1–3)                │
-        │  (Flask / Node.js API, auto‑scaled & self‑healed) │
-        └──────────────┬──────────────┬────────────────────┘
-                       │              │
-                       │              │
-                       ▼              ▼
-                 ┌──────────────────────────────┐
-                 │         MySQL Service         │
-                 │   (Internal DB endpoint)      │
-                 └──────────────┬───────────────┘
-                                │
-                                │ DB Connection
-                                ▼
-                 ┌──────────────────────────────┐
-                 │            MySQL Pod          │
-                 │   (Reads secrets & uses PVC)  │
-                 └──────────────┬───────────────┘
-                                │
-                                │ Persistent Storage
-                                ▼
-                 ┌──────────────────────────────┐
-                 │        Persistent Volume      │
-                 │      (Data survives restarts) │
-                 └───────────────────────────────┘
+                                   ┌──────────────────────────────────────┐
+                                   │              Internet                │
+                                   │     (User's Browser / Client)        │
+                                   └───────────────────┬──────────────────┘
+                                                       │
+                                                       │ HTTPS Request
+                                                       ▼
+                                   ┌──────────────────────────────────────┐
+                                   │                Route                 │
+                                   │     (Public entrypoint in Rahti)     │
+                                   │   Only frontend is exposed publicly  │
+                                   └───────────────────┬──────────────────┘
+                                                       │
+                                                       │ Internal routing
+                                                       ▼
+                                   ┌──────────────────────────────────────┐
+                                   │          Frontend Service            │
+                                   │      (ClusterIP, internal DNS)       │
+                                   │   Example DNS: frontend-service      │
+                                   └───────────────────┬──────────────────┘
+                                                       │
+                                                       │ Sends traffic to
+                                                       ▼
+                                   ┌──────────────────────────────────────┐
+                                   │            Frontend Pod              │
+                                   │               (Nginx)                │
+                                   │ Serves static files (HTML/CSS/JS)    │
+                                   │ Makes API calls to backend           │
+                                   └───────────────────┬──────────────────┘
+                                                       │
+                                                       │ HTTP API calls
+                                                       │ Example: /api/items
+                                                       ▼
+                                   ┌──────────────────────────────────────┐
+                                   │           Backend Service            │
+                                   │      (ClusterIP, internal DNS)       │
+                                   │   Example DNS: backend-service       │
+                                   └───────────────────┬──────────────────┘
+                                                       │
+                                                       │ Load-balances to
+                                                       ▼
+                                   ┌──────────────────────────────────────┐
+                                   │            Backend Pod               │
+                                   │         (Flask + Gunicorn)           │
+                                   │ Handles API logic:                   │
+                                   │  - Receives frontend requests        │
+                                   │  - Validates input                   │
+                                   │  - Reads/writes MySQL data           │
+                                   │ Uses secrets for DB credentials      │
+                                   └───────────────────┬──────────────────┘
+                                                       │
+                                                       │ SQL queries
+                                                       ▼
+                                   ┌──────────────────────────────────────┐
+                                   │           MySQL Service              │
+                                   │      (ClusterIP, internal DNS)       │
+                                   │   Example DNS: mysql-service         │
+                                   └───────────────────┬──────────────────┘
+                                                       │
+                                                       │ Forwards DB traffic
+                                                       ▼
+                                   ┌──────────────────────────────────────┐
+                                   │               MySQL Pod              │
+                                   │   Stores and retrieves application   │
+                                   │   data (guestbook, counter, etc.)    │
+                                   │   Reads credentials from Secret      │
+                                   └───────────────────┬──────────────────┘
+                                                       │
+                                                       │ Persistent storage
+                                                       ▼
+                                   ┌──────────────────────────────────────┐
+                                   │      Persistent Volume Claim (PVC)   │
+                                   │   Ensures MySQL data survives:       │
+                                   │    - Pod restarts                    │
+                                   │    - Updates                         │
+                                   │    - Scaling                         │
+                                   └──────────────────────────────────────┘
+
+
 
 
 ## Project Structure
